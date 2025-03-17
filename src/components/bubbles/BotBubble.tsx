@@ -372,7 +372,7 @@ export const BotBubble = (props: Props) => {
               </For>
             </div>
           )}
-          {props.message.message && (
+          {/* {props.message.message && (
             <span
               ref={botMessageEl}
               class="px-4 py-2 ml-2 max-w-full chatbot-host-bubble prose"
@@ -384,7 +384,7 @@ export const BotBubble = (props: Props) => {
                 'font-size': props.fontSize ? `${props.fontSize}px` : `${defaultFontSize}px`,
               }}
             />
-          )}
+          )} */}
           {props.message.action && (
             <div class="px-4 py-2 flex flex-row justify-start space-x-2">
               <For each={props.message.action.elements || []}>
