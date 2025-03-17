@@ -333,7 +333,7 @@ export const BotBubble = (props: Props) => {
         <Show when={props.showAvatar}>
           <Avatar initialAvatarSrc={props.avatarSrc} />
         </Show>
-        {/* <div class="flex flex-col justify-start">
+        <div class="flex flex-col justify-start">
           {props.showAgentMessages && props.message.agentReasoning && (
             <details ref={botDetailsEl} class="mb-2 px-4 py-2 ml-2 chatbot-host-bubble rounded-[6px]">
               <summary class="cursor-pointer">
@@ -420,7 +420,7 @@ export const BotBubble = (props: Props) => {
               </For>
             </div>
           )}
-        </div> */}
+        </div>
       </div>
       <div>
         {props.message.sourceDocuments && props.message.sourceDocuments.length && (
