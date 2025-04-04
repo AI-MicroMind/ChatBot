@@ -142,6 +142,8 @@ export type BotProps = {
   showAgentMessages?: boolean;
   title?: string;
   titleAvatarSrc?: string;
+  titleTextColor?: string;
+  titleBackgroundColor?: string;
   fontSize?: number;
   isFullPage?: boolean;
   footer?: FooterTheme;
@@ -153,6 +155,7 @@ export type BotProps = {
   disclaimer?: DisclaimerPopUpTheme;
   dateTimeToggle?: DateTimeToggleTheme;
   renderHTML?: boolean;
+  closeBot?: () => void;
 };
 
 export type LeadsConfig = {
@@ -245,6 +248,7 @@ const defaultWelcomeMessage = 'Hi there! How can I help?';
 
 const defaultBackgroundColor = '#ffffff';
 const defaultTextColor = '#303235';
+const defaultTitleBackgroundColor = '#3B81F6';
 
 export const Bot = (botProps: BotProps & { class?: string }) => {
   // set a default value for showTitle if not set and merge with other props
@@ -268,9 +272,7 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
   );
 
   const [isChatFlowAvailableToStream, setIsChatFlowAvailableToStream] = createSignal(false);
-  const [chatId, setChatId] = createSignal(
-    (props.chatflowConfig?.vars as any)?.customerId ? `${(props.chatflowConfig?.vars as any).customerId.toString()}+${uuidv4()}` : uuidv4(),
-  );
+  const [chatId, setChatId] = createSignal('');
   const [isMessageStopping, setIsMessageStopping] = createSignal(false);
   const [starterPrompts, setStarterPrompts] = createSignal<string[]>([], { equals: false });
   const [chatFeedbackStatus, setChatFeedbackStatus] = createSignal<boolean>(false);
@@ -298,6 +300,11 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
   // drag & drop
   const [isDragActive, setIsDragActive] = createSignal(false);
   const [uploadedFiles, setUploadedFiles] = createSignal<{ file: File; type: string }[]>([]);
+
+  createMemo(() => {
+    const customerId = (props.chatflowConfig?.vars as any)?.customerId;
+    setChatId(customerId ? `${customerId.toString()}+${uuidv4()}` : uuidv4());
+  });
 
   onMount(() => {
     if (botProps?.observersConfig) {
@@ -468,9 +475,13 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
   };
 
   // Handle errors
-  const handleError = (message = 'Oops! There seems to be an error. Please try again.') => {
+  const handleError = (message = 'Oops! There seems to be an error. Please try again.', preventOverride?: boolean) => {
+    let errMessage = message;
+    if (!preventOverride && props.errorMessage) {
+      errMessage = props.errorMessage;
+    }
     setMessages((prevMessages) => {
-      const messages: MessageType[] = [...prevMessages, { message: props.errorMessage || message, type: 'apiMessage' }];
+      const messages: MessageType[] = [...prevMessages, { message: errMessage, type: 'apiMessage' }];
       addChatMessage(messages);
       return messages;
     });
@@ -547,11 +558,11 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
         'Content-Type': 'application/json',
       },
       async onopen(response) {
-        if (response.ok && response.headers.get('content-type') === EventStreamContentType) {
+        if (response.ok && response.headers.get('content-type')?.startsWith(EventStreamContentType)) {
           return; // everything's good
         } else if (response.status === 429) {
           const errMessage = (await response.text()) ?? 'Too many requests. Please try again later.';
-          handleError(errMessage);
+          handleError(errMessage, true);
           throw new Error(errMessage);
         } else if (response.status === 403) {
           const errMessage = (await response.text()) ?? 'Unauthorized';
@@ -743,7 +754,7 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
     try {
       uploads = await handleFileUploads(uploads);
     } catch (error) {
-      handleError('Unable to upload documents');
+      handleError('Unable to upload documents', true);
       return;
     }
 
@@ -1123,6 +1134,7 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
       }
       // Only add files
       if (
+        !file.type ||
         !uploadsConfig()
           ?.imgUploadSizeAndTypes.map((allowed) => allowed.fileTypes)
           .join(',')
@@ -1193,6 +1205,7 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
         }
         // Only add files
         if (
+          !file.type ||
           !uploadsConfig()
             ?.imgUploadSizeAndTypes.map((allowed) => allowed.fileTypes)
             .join(',')
@@ -1392,8 +1405,8 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
           <div
             class="flex flex-row items-center w-full h-[50px] absolute top-0 left-0 z-10"
             style={{
-              background: props.bubbleBackgroundColor,
-              color: props.bubbleTextColor,
+              background: props.titleBackgroundColor || props.bubbleBackgroundColor || defaultTitleBackgroundColor,
+              color: props.titleTextColor || props.bubbleTextColor || defaultBackgroundColor,
               'border-top-left-radius': props.isFullPage ? '0px' : '6px',
               'border-top-right-radius': props.isFullPage ? '0px' : '6px',
             }}
@@ -1605,6 +1618,8 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
                 handleFileChange={handleFileChange}
                 sendMessageSound={props.textInput?.sendMessageSound}
                 sendSoundLocation={props.textInput?.sendSoundLocation}
+                enableInputHistory={true}
+                maxHistorySize={10}
               />
             )}
           </div>
@@ -1624,7 +1639,16 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
           onAccept={handleDisclaimerAccept}
           title={props.disclaimer?.title}
           message={props.disclaimer?.message}
+          textColor={props.disclaimer?.textColor}
+          buttonColor={props.disclaimer?.buttonColor}
           buttonText={props.disclaimer?.buttonText}
+          buttonTextColor={props.disclaimer?.buttonTextColor}
+          blurredBackgroundColor={props.disclaimer?.blurredBackgroundColor}
+          backgroundColor={props.disclaimer?.backgroundColor}
+          denyButtonBgColor={props.disclaimer?.denyButtonBgColor}
+          denyButtonText={props.disclaimer?.denyButtonText}
+          onDeny={props.closeBot}
+          isFullPage={props.isFullPage}
         />
       )}
     </>

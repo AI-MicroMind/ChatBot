@@ -45,6 +45,9 @@ export const Full = (props: FullProps, { element }: { element: HTMLElement }) =>
 
   return (
     <>
+      <Show when={props.theme?.customCSS}>
+        <style>{props.theme?.customCSS}</style>
+      </Show>
       <style>{styles}</style>
       <Show when={isBotDisplayed()}>
         <div
@@ -64,6 +67,8 @@ export const Full = (props: FullProps, { element }: { element: HTMLElement }) =>
             showAgentMessages={props.theme?.chatWindow?.showAgentMessages}
             title={props.theme?.chatWindow?.title}
             titleAvatarSrc={props.theme?.chatWindow?.titleAvatarSrc}
+            titleTextColor={props.theme?.chatWindow?.titleTextColor}
+            titleBackgroundColor={props.theme?.chatWindow?.titleBackgroundColor}
             welcomeMessage={props.theme?.chatWindow?.welcomeMessage}
             errorMessage={props.theme?.chatWindow?.errorMessage}
             poweredByTextColor={props.theme?.chatWindow?.poweredByTextColor}
